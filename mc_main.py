@@ -11,6 +11,11 @@ import time
 import tkinter as tk
 import uuid
 
+from tkinter import filedialog, messagebox, ttk
+from minecraft_launcher_lib.types import MinecraftVersionInfo, CallbackDict, MinecraftOptions
+import minecraft_launcher_lib
+from typing import Any, Optional, cast
+
 _ADJECTIVES = sorted(
     [
         "Bill", "Cal", "Dar", "Fun", "Gen", "Gol", "Happy", "Hol", "Krit",
@@ -24,11 +29,6 @@ _NOUNS = sorted(
         "Turly", "Vey", "White", "Win", "Znack",
     ]
 )
-from tkinter import filedialog, messagebox, ttk
-from minecraft_launcher_lib.types import MinecraftVersionInfo, CallbackDict, MinecraftOptions
-import minecraft_launcher_lib
-from typing import Any, Optional, cast
-
 
 class Launchercito:
 
@@ -42,7 +42,6 @@ class Launchercito:
         "-XX:G1HeapRegionSize=32M",
     ]
     java_executable = ""
-    
     
     def __init__(self, main_root: tk.Tk) -> None:
         self.root = main_root
@@ -125,10 +124,6 @@ class Launchercito:
             self.root.title("Minecito v1.5")
             self.root.geometry("305x160")
             self.root.iconbitmap(self.resource_path("minecito-app/icons/minecito_launcher.ico"))  # type: ignore
-
-    
-
-    
 
     def _initialize_configuration(self) -> None:
         default_minecraft_directory = minecraft_launcher_lib.utils.get_minecraft_directory()
@@ -478,8 +473,8 @@ class Launchercito:
         screen_height = 0
         if self.root and self.root.winfo_exists():
             root_window: tk.Tk = self.root
-            screen_width = root_window.winfo_screenwidth() # type: ignore
-            screen_height = root_window.winfo_screenheight() # type: ignore
+            screen_width = root_window.winfo_screenwidth()
+            screen_height = root_window.winfo_screenheight()
             x = (screen_width // 2) - (width // 2)
             y = (screen_height // 2) - (height // 2)
             self.root.geometry(f"+{x}+{y}")
@@ -772,8 +767,6 @@ class Launchercito:
                 self.entry_username.set(last_user_data.get("username", ""))
         else:
             self.generate_random_user_data()
-
-        
         self.hide_show_log()
 
     def update_uuid_entry(self) -> None:
@@ -1223,8 +1216,8 @@ class Launchercito:
             screen_height = 0
             if self.root and self.root.winfo_exists():
                 root_window: tk.Tk = self.root
-                screen_width = root_window.winfo_screenwidth() # type: ignore
-                screen_height = root_window.winfo_screenheight() # type: ignore
+                screen_width = root_window.winfo_screenwidth()
+                screen_height = root_window.winfo_screenheight()
             x = (screen_width // 2) - (window_width // 2)
             y = (screen_height // 2) - (window_height // 2)
             self.advanced_options_window.geometry(f"+{x}+{y}")
@@ -1493,9 +1486,6 @@ class Launchercito:
             return
         java_path = self.get_java_executable_path()
         self.java_executable = java_path
-
-
-
 
 _RANDOM_USERNAME_PATTERN_COMPILED = re.compile(
     "|".join(
