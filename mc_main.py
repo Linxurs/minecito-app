@@ -60,11 +60,14 @@ class Launchercito:
         self._original_directory_var_value: str = ""
         self._original_java_executable_var_value: str = ""
         self._original_hide_log_var_value: bool = False
+        self._original_delete_user_on_apply_var_value: bool = False
+        self.delete_user_on_apply_var: tk.BooleanVar = tk.BooleanVar()
         self.advanced_options_window: Optional[tk.Toplevel] = None
         self.log_frame: Optional[ttk.Frame] = None
         self.java_executable: str = ""
         self.hide_log_checkbox: Optional[ttk.Checkbutton] = None
         self.enable_uuid_checkbox: Optional[ttk.Checkbutton] = None
+        self.delete_user_checkbox: Optional[ttk.Checkbutton] = None
         self.frame: Optional[ttk.Frame] = None
         self.label_username: Optional[ttk.Label] = None
         self.entry_username: Optional[ttk.Combobox] = None
@@ -251,6 +254,7 @@ class Launchercito:
         user_data_list = self._remove_duplicate_user_data(user_data_list, user_data)
         user_data_list.append(user_data)
         self._write_config_file(config_file_path, user_data_list)
+        self._update_delete_user_checkbox_state(user_data_list)
 
     def _create_user_data_dict(self) -> dict[str, Any]:
         return {
@@ -733,7 +737,7 @@ class Launchercito:
         if selected_username:
             self.load_user_data_from_directory()
 
-    def generate_random_user_data(self) -> None:
+    def generate_random_user_data(self) -> str:
         random_username = self.get_random_username()
         if self.entry_username:
             self.entry_username.delete(0, tk.END)
@@ -754,6 +758,7 @@ class Launchercito:
                 "<FocusOut>", lambda event: self.on_focus_out(event, "Random")
             )
         self.update_uuid_entry()
+        return random_username
 
     def initialize_user_data(self) -> None:
         self.advanced_options_directory_var.set(self.minecraft_directory)
@@ -761,6 +766,7 @@ class Launchercito:
         user_data_list = self._read_config_file(config_file_path)
 
         if user_data_list:
+            self._process_user_data(user_data_list)
             last_user_data = user_data_list[-1]
             self._set_user_data(last_user_data)
             if self.entry_username:
@@ -768,6 +774,15 @@ class Launchercito:
         else:
             self.generate_random_user_data()
         self.hide_show_log()
+        self._update_delete_user_checkbox_state(user_data_list)
+
+    def _update_delete_user_checkbox_state(self, user_data_list: list[dict[str, Any]]) -> None:
+        if self.delete_user_checkbox and self.delete_user_checkbox.winfo_exists():
+            if len(user_data_list) == 0:
+                self.delete_user_checkbox.config(state=tk.DISABLED)
+                self.delete_user_on_apply_var.set(False)
+            else:
+                self.delete_user_checkbox.config(state=tk.NORMAL)
 
     def update_uuid_entry(self) -> None:
         username = self.entry_username.get().strip() if self.entry_username else ""
@@ -776,6 +791,7 @@ class Launchercito:
         elif self.is_username_changed(username):
             self.update_uuid_based_on_username(username)
         self.update_previous_username(username)
+        self.update_username_color(username)
 
     def is_empty_username(self, username: str) -> bool:
         return len(username) == 0
@@ -1083,7 +1099,7 @@ class Launchercito:
             self.advanced_options_window.destroy()
 
         window_width = 340
-        window_height = 224
+        window_height = 243
         screen_width = self.root.winfo_screenwidth()  # type: ignore
         screen_height = self.root.winfo_screenheight()  # type: ignore
         x = (screen_width // 2) - (window_width // 2)
@@ -1102,20 +1118,25 @@ class Launchercito:
         self._original_directory_var_value = self.advanced_options_directory_var.get()
         self._original_java_executable_var_value = self.java_executable_var.get()
         self._original_hide_log_var_value = self.hide_log_var.get()
+        self._original_delete_user_on_apply_var_value = self.delete_user_on_apply_var.get()
 
         self.create_advanced_options_widgets()
+        config_file_path = os.path.join(self.minecraft_directory, self.config_file)
+        user_data_list = self._read_config_file(config_file_path)
+        self._update_delete_user_checkbox_state(user_data_list)
         self.advanced_options_window.deiconify()
 
     def create_advanced_options_widgets(self) -> None:
         if self.advanced_options_window:
             main_frame = ttk.Frame(self.advanced_options_window)
-            main_frame.place(x=5, y=2)
+            main_frame.place(x=5, y=2, width=330, height=246)
             self.create_jvm_args_widget(main_frame)
             self.create_java_executable_widget(main_frame)
             self.create_minecraft_directory_widget(main_frame)
             self.create_close_launcher_widget(main_frame)
             self.create_hide_log_widget(main_frame)
             self.create_enable_uuid_widget(main_frame)
+            self.create_delete_user_widget(main_frame)
             self.create_buttons_frame(main_frame)
 
     def create_jvm_args_widget(self, main_frame: ttk.Frame) -> None:
@@ -1195,17 +1216,27 @@ class Launchercito:
         )
         self.enable_uuid_checkbox.place(x=0, y=168)
 
+    def create_delete_user_widget(self, main_frame: ttk.Frame) -> None:
+        self.delete_user_checkbox = ttk.Checkbutton(
+            main_frame,
+            text="Eliminar usuario actual.",
+            variable=self.delete_user_on_apply_var,
+            command=self.on_delete_user_checkbox_toggle
+        )
+        self.delete_user_checkbox.place(x=0, y=188)
+
+    def on_delete_user_checkbox_toggle(self) -> None:
+        pass
+
     def create_buttons_frame(self, main_frame: ttk.Frame) -> None:
-        button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=0, column=0, pady=80, columnspan=2, sticky="S")
         apply_button = ttk.Button(
             main_frame, text="Aplicar", command=self.apply_advanced_options
         )
-        apply_button.grid(row=1, column=0, padx=(85, 0), pady=30, sticky="W")
+        apply_button.place(x=85, y=210)
         cancel_button = ttk.Button(
             main_frame, text="Cancelar", command=self.cancel_advanced_options
         )
-        cancel_button.grid(row=1, column=1, padx=(10, 85), pady=30, sticky="E")
+        cancel_button.place(x=185, y=210)
 
     def center_advanced_options_window(self) -> None:
         if self.advanced_options_window:
@@ -1295,6 +1326,67 @@ class Launchercito:
         if not os.path.isdir(custom_directory):
             self._show_error_message_on_main_thread("Error", "El directorio personalizado no es válido.")
             return
+        
+        if self.delete_user_on_apply_var.get():
+            selected_username = self.entry_username.get().strip() if self.entry_username else ""
+            
+            if not selected_username:
+                
+                messagebox.showwarning("Eliminar Usuario", "Por favor, selecciona un usuario para eliminar.")
+                self.delete_user_on_apply_var.set(False)
+                return
+
+            if messagebox.askyesno(
+                "Confirmar Eliminación",
+                f"¿Estás seguro de que quieres eliminar el usuario '{selected_username}'?",
+                detail="Al eliminar este usuario, se borrarán todas sus configuraciones guardadas, incluyendo:\n\n" \
+                       "• Argumentos JVM personalizados\n" \
+                       "• Directorio de Minecraft\n" \
+                       "• Versión de Minecraft seleccionada\n" \
+                       "• Configuración de cierre del lanzador\n" \
+                       "• Configuración de UUID\n\n" \
+                       "Todas estas configuraciones se restablecerán a sus valores predeterminados. ¿Deseas continuar?",
+                icon="warning"
+            ):
+                try:
+                    config_file_path = os.path.join(self.minecraft_directory, self.config_file)
+                    user_data_list = self._read_config_file(config_file_path)
+                    updated_user_data_list = [
+                        user for user in user_data_list if str(user.get("username", "")) != selected_username
+                    ]
+                    self._write_config_file(config_file_path, updated_user_data_list)
+                    if updated_user_data_list:
+                        last_user_data = updated_user_data_list[-1]
+                        self._set_user_data(last_user_data)
+                        if self.entry_username:
+                            self.entry_username.set(last_user_data.get("username", ""))
+                    else:
+                        generated_username = self.generate_random_user_data()
+                        updated_user_data_list: list[dict[str, Any]] = [{
+                            "username": generated_username,
+                            "uuid": str(self.generate_uuid_for_username(generated_username)),
+                            "selected_version": "",
+                            "type_version": "release",
+                            "advanced_options_directory": self.minecraft_directory,
+                            "advanced_options_close_launcher": False,
+                            "hide_log": False,
+                            "enable_uuid": False,
+                            "jvm_args": "",
+                            "java_executable": ""
+                        }]
+                    self._process_user_data(updated_user_data_list)
+                    self._update_delete_user_checkbox_state(updated_user_data_list)
+                    if updated_user_data_list:
+                        if self.entry_username:
+                            self.entry_username.set(updated_user_data_list[0].get("username", ""))
+                    else:
+                        if self.entry_username:
+                            self.entry_username.set("")
+                except Exception as e:
+                    messagebox.showerror("Error", f"No se pudo eliminar el usuario: {e}")
+            self.delete_user_on_apply_var.set(False)
+
+
         if self.enable_uuid_var.get():
             if self.label_uuid:
                 self.label_uuid.place(x=40, y=95)
@@ -1330,6 +1422,7 @@ class Launchercito:
         self.advanced_options_directory_var.set(self._original_directory_var_value)
         self.java_executable_var.set(self._original_java_executable_var_value)
         self.hide_log_var.set(self._original_hide_log_var_value)
+        self.delete_user_on_apply_var.set(self._original_delete_user_on_apply_var_value)
 
         if self.advanced_options_window and self.advanced_options_window.winfo_exists():
             self.advanced_options_window.destroy()
