@@ -1,8 +1,6 @@
 import json
 import os
 import random
-import re
-import signal
 import subprocess
 import sys
 import shutil
@@ -10,7 +8,6 @@ import threading
 import time
 import tkinter as tk
 import uuid
-
 from tkinter import filedialog, messagebox, ttk
 from minecraft_launcher_lib.types import MinecraftVersionInfo, CallbackDict, MinecraftOptions
 import minecraft_launcher_lib
@@ -126,7 +123,7 @@ class Launchercito:
             self.root.resizable(False, False)
             self.root.title("Minecito v1.5")
             self.root.geometry("305x160")
-            self.root.iconbitmap(self.resource_path("minecito-app/icons/minecito_launcher.ico"))  # type: ignore
+            self.root.iconbitmap(self.resource_path("icons/minecito_launcher.ico"))  # type: ignore
 
     def _initialize_configuration(self) -> None:
         default_minecraft_directory = minecraft_launcher_lib.utils.get_minecraft_directory()
@@ -299,7 +296,6 @@ class Launchercito:
             self.log_message(f"Archivo JSON corrupto: {config_path}")
             return cast(list[dict[str, Any]], [])
         except FileNotFoundError:
-            self.log_message(f"Archivo no encontrado: {config_path}")
             return cast(list[dict[str, Any]], [])
         except IOError as e:
             self.log_message(f"Error de E/S al cargar configuración: {e}")
@@ -312,8 +308,18 @@ class Launchercito:
         return [data for data in user_data_list if data["username"] != user_data["username"]]
 
     def _write_config_file(self, config_file_path: str, user_data_list: list[dict[str, Any]]) -> None:
-        with open(config_file_path, "w", encoding="utf-8") as json_file:
-            json.dump(user_data_list, json_file, indent=2)
+        try:
+            os.makedirs(os.path.dirname(config_file_path), exist_ok=True)
+            with open(config_file_path, "w", encoding="utf-8") as json_file:
+                json.dump(user_data_list, json_file, indent=2)
+        except IOError as e:
+            error_msg = f"Error de E/S al guardar la configuración en {config_file_path}: {e}"
+            self.log_message(error_msg)
+            self._show_error_message_on_main_thread("Error al Guardar", f"No se pudo guardar la configuración en {config_file_path}. Verifique los permisos.")
+        except Exception as e:
+            error_msg = f"Error inesperado al guardar la configuración: {e}"
+            self.log_message(error_msg)
+            self._show_error_message_on_main_thread("Error Inesperado", f"Ocurrió un error inesperado al guardar la configuración: {e}")
 
     def _generate_user_index(self) -> int:
         config_file_path = os.path.join(
@@ -401,14 +407,16 @@ class Launchercito:
             user_data.get("jvm_args", " ".join(self.default_jvm_args))
         )
         self.update_version_list()
+
         hide_log_value = user_data.get("hide_log", False)
+        enable_uuid_value = user_data.get("enable_uuid", False)
+
         if self.hide_log_var:
             self.hide_log_var.set(hide_log_value)
-        self.hide_show_log()
-        self.adjust_window_size()
-        enable_uuid_value = user_data.get("enable_uuid", False)
         if self.enable_uuid_var:
             self.enable_uuid_var.set(enable_uuid_value)
+
+        self.hide_show_log()
         self._update_uuid_visibility(enable_uuid_value, user_data.get("uuid", ""))
         
 
@@ -507,7 +515,7 @@ class Launchercito:
 
     def _terminate_process(self) -> None:
         if self.process and self.process.poll() is None:
-            os.kill(self.process.pid, signal.SIGTERM)
+            self.process.terminate()
             self.log_message("Minecraft cerrado correctamente.")
         else:
             self.log_message("No se encontró ningún proceso de Minecraft para cerrar.")
@@ -739,46 +747,71 @@ class Launchercito:
 
     def generate_random_user_data(self) -> str:
         random_username = self.get_random_username()
+
+        default_user_data: dict[str, Any] = {
+            "username": random_username,
+            "uuid": str(self.generate_uuid_for_username(random_username)),
+            "selected_version": "",
+            "type_version": "release",
+            "advanced_options_directory": self.minecraft_directory,
+            "advanced_options_close_launcher": False,
+            "hide_log": False,
+            "enable_uuid": False,
+            "jvm_args": " ".join(self.default_jvm_args),
+            "java_executable": "",
+        }
+        self._set_user_data(default_user_data)
+
         if self.entry_username:
-            self.entry_username.delete(0, tk.END)
-            self.entry_username.insert(0, random_username)
-            self.entry_username.config(foreground="gray")
-            self.entry_username.bind(
-                "<FocusIn>", lambda event: self.on_focus_in(event, "Random")
-            )
-            self.entry_username.bind(
-                "<FocusOut>", lambda event: self.on_focus_out(event, "Random")
-            )
-        if self.entry_uuid:
-            self.entry_uuid.config(foreground="gray")
-            self.entry_uuid.bind(
-                "<FocusIn>", lambda event: self.on_focus_in(event, "Random")
-            )
-            self.entry_uuid.bind(
-                "<FocusOut>", lambda event: self.on_focus_out(event, "Random")
-            )
+            self.entry_username.set(random_username)
+
         self.update_uuid_entry()
+        self.update_username_color(random_username)
+
         return random_username
 
     def initialize_user_data(self) -> None:
         self.advanced_options_directory_var.set(self.minecraft_directory)
         config_file_path = os.path.join(self.minecraft_directory, self.config_file)
-        user_data_list = self._read_config_file(config_file_path)
+        user_data_list: list[dict[str, Any]] = self._read_config_file(config_file_path)
 
         if user_data_list:
             self._process_user_data(user_data_list)
-            last_user_data = user_data_list[-1]
+            last_user_data: dict[str, Any] = user_data_list[-1]
             self._set_user_data(last_user_data)
             if self.entry_username:
                 self.entry_username.set(last_user_data.get("username", ""))
+                self.update_username_color(last_user_data.get("username", ""))
+                self.update_uuid_entry()
         else:
-            self.generate_random_user_data()
-        self.hide_show_log()
+            random_username = self.get_random_username()
+            default_user_data: dict[str, Any]
+            default_user_data = {
+                "username": random_username,
+                "uuid": str(self.generate_uuid_for_username(random_username)),
+                "selected_version": "",
+                "type_version": "release",
+                "advanced_options_directory": self.minecraft_directory,
+                "advanced_options_close_launcher": False,
+                "hide_log": False,
+                "enable_uuid": False,
+                "jvm_args": " ".join(self.default_jvm_args),
+                "java_executable": "",
+            }
+            self._set_user_data(default_user_data)
+            if self.entry_username:
+                self.entry_username.set(random_username)
+            self.update_uuid_entry()
+
         self._update_delete_user_checkbox_state(user_data_list)
 
     def _update_delete_user_checkbox_state(self, user_data_list: list[dict[str, Any]]) -> None:
         if self.delete_user_checkbox and self.delete_user_checkbox.winfo_exists():
-            if len(user_data_list) == 0:
+            username = self.entry_username.get().strip() if self.entry_username else ""
+            
+            user_exists_in_config = any(user.get("username") == username for user in user_data_list)
+
+            if not user_data_list or not user_exists_in_config:
                 self.delete_user_checkbox.config(state=tk.DISABLED)
                 self.delete_user_on_apply_var.set(False)
             else:
@@ -859,7 +892,7 @@ class Launchercito:
         return truncated_name
 
     def _is_randomly_generated(self, username: str) -> bool:
-        return _RANDOM_USERNAME_PATTERN_COMPILED.match(username) is not None
+        return username in _RANDOM_USERNAMES_SET
 
     def on_focus_in(self, event: tk.Event, default_text: str) -> None:
         widget = cast(ttk.Entry, event.widget)
@@ -1110,7 +1143,7 @@ class Launchercito:
         self.advanced_options_window.title("Opciones Avanzadas")
         self.advanced_options_window.geometry(f"{window_width}x{window_height}+{x}+{y}")
         self.advanced_options_window.resizable(False, False)
-        self.advanced_options_window.iconbitmap(self.resource_path("minecito-app/icons/crafting_table.ico"))  # type: ignore
+        self.advanced_options_window.iconbitmap(self.resource_path("icons/crafting_table.ico"))  # type: ignore
         self.advanced_options_window.transient(self.root)
         self.advanced_options_window.grab_set()
         self._original_close_launcher_var_value = self.advanced_options_close_launcher_var.get()
@@ -1580,13 +1613,16 @@ class Launchercito:
         java_path = self.get_java_executable_path()
         self.java_executable = java_path
 
-_RANDOM_USERNAME_PATTERN_COMPILED = re.compile(
-    "|".join(
-        f"{adjective}as{noun}[0-9]{{2}}"
+def _create_random_usernames_set() -> set[str]:
+    max_length = 16
+    return {
+        f"{adjective}as{noun}{i:02d}"[:max_length]
         for adjective in _ADJECTIVES
         for noun in _NOUNS
-    )
-)
+        for i in range(100)
+    }
+
+_RANDOM_USERNAMES_SET = _create_random_usernames_set()
 
 if __name__ == "__main__":
     root = tk.Tk()
