@@ -1,0 +1,42 @@
+[2025-09-12 15:49:20] Iniciando Minecraft...
+[2025-09-12 15:49:20] Versión de Java: java version "1.8.0_51"
+
+[2025-09-12 15:49:20] INFORMACIÓN DE LA SESIÓN:
+=== Java ===
+C:\Users\Estudiantes\AppData\Local\.minecito\runtime\jre-legacy\windows-x64\jre-legacy\bin\javaw.exe
+=== Parámetros ===
+-Djava.library.path=C:\Users\Estudiantes\AppData\Local\.minecito\versions\a1.2.6\natives
+  -cp
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\net\minecraft\launchwrapper\1.5\launchwrapper-1.5.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\net\sf\jopt-simple\jopt-simple\4.5\jopt-simple-4.5.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\org\ow2\asm\asm-all\4.1\asm-all-4.1.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\net\java\jinput\jinput\2.0.5\jinput-2.0.5.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\net\java\jutils\jutils\1.0.0\jutils-1.0.0.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\org\lwjgl\lwjgl\lwjgl\2.9.0\lwjgl-2.9.0.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\org\lwjgl\lwjgl\lwjgl_util\2.9.0\lwjgl_util-2.9.0.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\org\lwjgl\lwjgl\lwjgl-platform\2.9.0\lwjgl-platform-2.9.0.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\org\lwjgl\lwjgl\lwjgl-platform\2.9.0\lwjgl-platform-2.9.0-natives-windows.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\net\java\jinput\jinput-platform\2.0.5\jinput-platform-2.0.5.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\libraries\net\java\jinput\jinput-platform\2.0.5\jinput-platform-2.0.5-natives-windows.jar
+    C:\Users\Estudiantes\AppData\Local\.minecito\versions\a1.2.6\a1.2.6.jar
+
+=== Usuario ===
+CalasBlast82
+d3b83a5a-614d-50f5-8ff7-12abf058fdbb
+a1.2.6
+
+=== Opciones ===
+  --gameDir
+	C:\Users\Estudiantes\AppData\Local\.minecito
+  --assetsDir
+	C:\Users\Estudiantes\AppData\Local\.minecito\assets\virtual\legacy
+  JVM Arguments:
+    -Xmx2G
+    -XX:+UnlockExperimentalVMOptions
+    -XX:+UseG1GC
+    -XX:G1NewSizePercent=20
+    -XX:G1ReservePercent=20
+    -XX:MaxGCPauseMillis=50
+    -XX:G1HeapRegionSize=32M
+
+

@@ -1,0 +1,26 @@
+Ideas para mc_main.py:
+
+### Mejoras de Funcionalidad:
+
+1.  **Soporte para Múltiples Perfiles de Instalación:** Permitir que cada usuario tenga múltiples perfiles de instalación de Minecraft (ej. un perfil para Vanilla, otro para Fabric, otro para Forge, cada uno con su propia configuración de JVM y directorio).
+2.  **Gestión de Mods:**
+    *   **Instalación y Desinstalación de Mods:** Añadir una interfaz para que los usuarios puedan arrastrar y soltar archivos `.jar` de mods, o seleccionar mods de una lista para instalar/desinstalar fácilmente en una versión específica.
+    *   **Detección de Modloaders:** Mejorar la detección de modloaders y quizás ofrecer la instalación automática de Fabric/Forge/Quilt para una versión seleccionada.
+3.  **Actualización Automática del Lanzador:** Implementar un sistema para que el lanzador se actualice a sí mismo cuando haya una nueva versión disponible.
+4.  **Descarga de Recursos (Resource Packs/Shaders):** Permitir a los usuarios descargar e instalar paquetes de recursos o shaders directamente desde el lanzador.
+5.  **Integración con Cuentas de Mojang/Microsoft:** Si aún no lo hace, integrar la autenticación con cuentas de Minecraft para permitir el juego en servidores premium.
+6.  **Personalización de Argumentos JVM por Versión:** Permitir que los argumentos JVM se guarden por versión de Minecraft, no solo globalmente o por usuario.
+7.  **Explorador de Archivos de Minecraft:** Añadir un botón para abrir directamente la carpeta de instalación de Minecraft, la carpeta de saves, la carpeta de mods, etc.
+8.  **Soporte para Servidores:** Una sección donde los usuarios puedan guardar y lanzar directamente sus servidores favoritos de Minecraft.
+
+### Mejoras de Interfaz de Usuario (GUI):
+
+9.  **Diseño Moderno:** Actualizar la interfaz de `tkinter` para que se vea más moderna y atractiva, quizás usando `ttkbootstrap` o personalizando más los estilos.
+10. **Barra de Progreso Detallada:** Mejorar la barra de progreso durante la instalación de versiones o descarga de archivos, mostrando no solo el progreso general sino también el archivo actual que se está descargando.
+11. **Configuración de Idioma:** Añadir soporte para múltiples idiomas en la interfaz.
+12. **Temas (Claro/Oscuro):** Implementar un selector de temas para la interfaz (claro y oscuro).
+
+### Mejoras de Rendimiento y Estabilidad:
+
+13. **Manejo de Errores Mejorado:** Aunque ya tiene manejo de errores, podrías hacer que los mensajes sean más amigables o proporcionar opciones para solucionar problemas comunes.
+14. **Optimización de Carga de Versiones:** Para proyectos con muchas versiones, optimizar cómo se cargan para evitar que la interfaz se congele.

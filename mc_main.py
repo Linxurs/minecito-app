@@ -145,21 +145,21 @@ class Launchercito:
         
         self._ensure_launcher_profiles_exists()
 
-    def log_message(self, message: str) -> None:
+    def log_message(self, message: str, command_options: Optional[dict[str, Any]] = None, selected_version: Optional[str] = None) -> None:
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         if self.log_text:
             self.log_text.config(state=tk.NORMAL)
 
         if "Comando de Minecraft ejecutado:" in message:
-            formatted_message = self.format_command_message(message)
+            formatted_message = self.format_command_message(message, command_options, selected_version)
             if self.log_text:
-                self.log_text.insert(tk.END, f"[{timestamp}] {formatted_message}\n\n")
+                self.log_text.insert(tk.END, f"[{timestamp}] {formatted_message}\n")
         elif message.startswith("Advertencia:"):
             if self.log_text:
-                self.log_text.insert(tk.END, f"[{timestamp}] WARNING: {message}\n\n")
+                self.log_text.insert(tk.END, f"[{timestamp}] WARNING: {message}\n")
         else:
             if self.log_text:
-                self.log_text.insert(tk.END, f"[{timestamp}] {message}\n\n")
+                self.log_text.insert(tk.END, f"[{timestamp}] {message}\n")
 
         if self.log_text:
             self.log_text.config(state=tk.DISABLED)
@@ -169,10 +169,10 @@ class Launchercito:
         self._run_on_main_thread(messagebox.showerror, title, message)
         self._run_on_main_thread(self._reset_ui_after_error)
 
-    def format_command_message(self, message: str) -> str:
+    def format_command_message(self, message: str, command_options: Optional[dict[str, Any]] = None, selected_version: Optional[str] = None) -> str:
         cmd: str = message.split(": ", 1)[1]
         parts: list[str] = cmd.split()
-        formatted: list[str] = ["INFORMACIÓN DE LA SESIÓN:"]
+        formatted: list[str] = ["INFORMACIÓN DE LA SESIÓN:\n"]
 
         java_index = 0
         cp_index: int = parts.index("-cp") if "-cp" in parts else -1
@@ -188,50 +188,66 @@ class Launchercito:
 
         formatted.extend(self.format_java_section(parts, java_index))
         formatted.extend(self.format_cp_section(parts, cp_index))
-        formatted.extend(self.format_user_section(parts, user_index))
-        formatted.extend(self.format_options_section(parts, options_start))
+        formatted.extend(self.format_user_section(parts, user_index, command_options, selected_version))
+        formatted.extend(self.format_options_section(parts, options_start, command_options))
 
         return "".join(formatted)
 
     def format_java_section(self, parts: list[str], java_index: int) -> list[str]:
-        return ["\n\n=== Java ===", f"\n{parts[java_index].replace('/', '\\')}"]
+        return ["=== Java ===\n", f"{parts[java_index].replace('/', '\\')}\n"]
 
     def format_cp_section(self, parts: list[str], cp_index: int) -> list[str]:
         if cp_index == -1:
             return []
 
         formatted: list[str] = [
-            "\n\n=== Parámetros ===",
-            f"\n  -Djava.library.path={parts[cp_index - 1].replace('/', '\\')}",
-            "\n  -cp",
+            "=== Parámetros ===\n",
+            f"{parts[cp_index - 1].replace('/', '\\')}\n",
+            "  -cp\n",
         ]
         unique_jars: set[str] = set()
         for jar in parts[cp_index + 1].split(";"):
             clean_jar = jar.strip().replace("/", "\\")
             if clean_jar and clean_jar not in unique_jars:
-                formatted.append(f"\n    {clean_jar}")
+                formatted.append(f"    {clean_jar}\n")
                 unique_jars.add(clean_jar)
 
         return formatted
 
-    def format_user_section(self, parts: list[str], user_index: int) -> list[str]:
+    def format_user_section(self, parts: list[str], user_index: int, command_options: Optional[dict[str, Any]] = None, selected_version: Optional[str] = None) -> list[str]:
         if user_index == -1:
             return []
 
-        return [
-            "\n\n=== Usuario ===",
-            f"\n  {parts[user_index]}",
-            f"\n  {parts[user_index + 1]}",
-        ]
+        username = parts[user_index]
+        user_uuid = command_options.get("uuid", "N/A") if command_options else "N/A"
+        version_info = selected_version if selected_version else "N/A"
 
-    def format_options_section(self, parts: list[str], options_start: int) -> list[str]:
+        formatted_user_section = [
+            "=== Usuario ===\n",
+            f"{username}\n",
+        ]
+        if user_uuid != "N/A":
+            formatted_user_section.append(f"{user_uuid}\n")
+        if version_info != "N/A":
+            formatted_user_section.append(f"{version_info}\n")
+
+        return formatted_user_section
+
+    def format_options_section(self, parts: list[str], options_start: int, command_options: Optional[dict[str, Any]] = None) -> list[str]:
         if options_start == -1:
             return []
 
-        formatted = ["\n\n=== Opciones ==="]
+        formatted = ["=== Opciones ===\n"]
         for i in range(options_start, len(parts), 2):
             if i + 1 < len(parts):
-                formatted.append(f"\n  {parts[i]} {parts[i + 1].replace('/', '\\')}")
+                formatted.append(f"{parts[i]}\n\t{parts[i + 1].replace('/', '\\')}\n")
+
+        formatted.append("Añadir debajo mas configuraciones de opciones avanzadas como JVM argumentos, checkbox etc.\n")
+
+        if command_options and "jvmArguments" in command_options:
+            formatted.append("JVM Arguments:\n")
+            for arg in command_options["jvmArguments"]:
+                formatted.append(f"\t{arg}\n")
 
         return formatted
 
@@ -646,6 +662,8 @@ class Launchercito:
             self.button_close_game["state"] = "normal"
 
     def run_minecraft(self, selected_version: str, options: dict[str, Any]) -> None:
+        self.selected_version_for_launch = selected_version
+        self.launch_options = options
         minecraft_command = minecraft_launcher_lib.command.get_minecraft_command(  # type: ignore
             selected_version, self.minecraft_directory, cast(MinecraftOptions, options)
         )
@@ -710,7 +728,9 @@ class Launchercito:
             creationflags=creationflags,
         )
         self.log_message(
-            f"Comando de Minecraft ejecutado:: {' '.join(minecraft_command)}"
+            f"Comando de Minecraft ejecutado:: {' '.join(minecraft_command)}",
+            command_options=self.launch_options,
+            selected_version=self.selected_version_for_launch
         )
         self.update_buttons_thread = threading.Thread(
             target=self._check_process, args=(self.process,), daemon=True
