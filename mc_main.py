@@ -1333,7 +1333,7 @@ class Launchercito:
             return "javaw"
         if self._is_alpha_or_beta(selected_version):
             return self._get_minecraft_jre_path("jre-legacy")
-        return self._get_minecraft_jre_path("java-runtime-gamma")
+        return self._get_minecraft_jre_path("java-runtime-delta")
 
     def _is_alpha_or_beta(self, version_id: str) -> bool:
         return (
