@@ -121,7 +121,7 @@ class Launchercito:
     def _configure_root_window(self) -> None:
         if self.root:
             self.root.resizable(False, False)
-            self.root.title("Minecito v1.5")
+            self.root.title("Minecito v1.5.4")
             self.root.geometry("305x160")
             self.root.iconbitmap(self.resource_path("icons/minecito_launcher.ico"))  # type: ignore
 
@@ -241,8 +241,6 @@ class Launchercito:
         for i in range(options_start, len(parts), 2):
             if i + 1 < len(parts):
                 formatted.append(f"{parts[i]}\n\t{parts[i + 1].replace('/', '\\')}\n")
-
-        formatted.append("Añadir debajo mas configuraciones de opciones avanzadas como JVM argumentos, checkbox etc.\n")
 
         if command_options and "jvmArguments" in command_options:
             formatted.append("JVM Arguments:\n")
@@ -1012,7 +1010,7 @@ class Launchercito:
                     "profiles": {},
                     "clientToken": str(uuid.uuid4()),
                     "settings": {"crashAssistance": True, "enableAnalytics": False},
-                    "launcherVersion": {"name": "Minecito-1.5", "format": 21},
+                    "launcherVersion": {"name": "Minecito-1.5.4", "format": 21},
                 }
                 os.makedirs(os.path.dirname(profiles_path), exist_ok=True)
                 with open(profiles_path, "w", encoding="utf-8") as f:
