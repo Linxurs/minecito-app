@@ -5,7 +5,7 @@ a = Analysis(
     ['mc_main.py'],
     pathex=[],
     binaries=[],
-    datas=[('minecito-app/icons')],
+    datas=[('icons', 'icons')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
