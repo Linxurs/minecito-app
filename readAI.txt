@@ -1,0 +1,35 @@
+Mojang organiza las versiones de Java que descarga el launcher en subcarpetas dentro del directorio `runtime` (`.minecraft/runtime/`). Cada carpeta contiene un entorno de ejecución específico que se usa automáticamente según la versión de Minecraft que juegues.
+
+A continuación se detallan los nombres de estas carpetas, la versión de Java que incluyen y el rango de versiones del juego para el que están destinadas.
+
+## 📁 Nombres de las carpetas de Java (runtime)
+
+| Nombre de la carpeta (en `.minecraft/runtime/`) | Versión de Java incluida | Versiones de Minecraft que la utilizan |
+| :--- | :--- | :--- |
+| **`jre-legacy`** | Java 7 u 8 | Todas las versiones **hasta 1.16.5** inclusive. Incluye también las etapas *Alpha* y *Beta* históricas[reference:0]. |
+| **`java-runtime-alpha`** | Java 16 | Versiones **1.17.x** (desde 21w19a) que requieren Java 16[reference:1]. |
+| **`java-runtime-beta`** | Java 17 | Versiones **1.18.x en adelante** que requieren Java 17. Suele usarse junto con `java-runtime-gamma` para la misma versión de Java. |
+| **`java-runtime-gamma`** | Java 17 | Igual que `java-runtime-beta`: para **1.18.x y superiores** que requieren Java 17. |
+| **`java-runtime-delta`** | Java 21 | Versiones más recientes (**1.20.5, 1.21.x, etc.**) que utilizan Java 21. |
+| **`minecraft-java-exe`** | Ejecutable especial | No es un runtime completo; es un ejecutable que el launcher puede usar internamente. |
+
+## 📍 Ubicación típica en Windows
+La estructura completa de una carpeta de runtime sigue este patrón (ejemplo para `java-runtime-delta`):
+```
+Roaming/.minecraft/runtime/java-runtime-delta/windows-x64/java-runtime-delta/bin/javaw.exe
+```
+Las otras carpetas (`jre-legacy`, `java-runtime-alpha`, etc.) se encuentran en la misma ubicación base (`runtime/`), cada una con su correspondiente subdirectorio de plataforma (windows-x64, linux, mac-os).
+
+## 🔍 Cómo se asigna cada runtime
+El launcher decide automáticamente qué carpeta usar en función de los requisitos de Java de cada versión del juego:
+- **Hasta 1.16.5** → Java 8 → `jre-legacy`.
+- **1.17.x** → Java 16 → `java-runtime-alpha`.
+- **1.18.x y posteriores** → Java 17 → `java-runtime-beta` o `java-runtime-gamma`.
+- **Versiones más recientes (ej. 1.21.x)** → Java 21 → `java-runtime-delta`.
+
+## 📄 Fuentes de referencia
+- El enum **JavaRuntimeTargetType** de XMCL lista los nombres oficiales de los runtimes (`java-runtime-alpha`, `-beta`, `-gamma`, `-delta`, `jre-legacy`, `minecraft-java-exe`)[reference:2].
+- El artículo **How to Change the Version of Java that Minecraft Uses** muestra las rutas exactas y asocia cada carpeta con una versión de Java (Java 16 → `java-runtime-alpha`, Java 17 → `java-runtime-gamma`, Java 21 → `java-runtime-delta`)[reference:3].
+- La página **Tutorials/Update Java** de la Minecraft Wiki especifica los requisitos de Java por versión del juego: hasta 1.16.5 necesita Java 8, 1.17.x necesita Java 16, y desde 1.18.x necesita Java 17[reference:4].
+
+En resumen, estos son los nombres de las carpetas que Mojang asigna a cada Java descargado y las versiones del juego que cubren. Si necesitas forzar el uso de un runtime específico (por ejemplo, para un modpack antiguo), puedes editar la instalación en el launcher y apuntar manualmente al `javaw.exe` de la carpeta correspondiente.

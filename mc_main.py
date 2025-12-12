@@ -90,7 +90,7 @@ class Launchercito:
         self.root.withdraw()
         self.root.after(0, self._initialize_launcher)
 
-    def _run_on_main_thread(self, func: Any, *args: Any, **kwargs) -> None:
+    def _run_on_main_thread(self, func: Any, *args: Any, **kwargs: Any) -> None:
         try:
             if self.root and self.root.winfo_exists():
                 self.root.after(0, lambda: func(*args, **kwargs))
@@ -194,7 +194,7 @@ class Launchercito:
         return "".join(formatted)
 
     def format_java_section(self, parts: list[str], java_index: int) -> list[str]:
-        return ["=== Java ===\n", f"{parts[java_index].replace('/', '\')}\n"]
+        return ["=== Java ===\n", f"{parts[java_index].replace('/', '\\')}\n"]
 
     def format_cp_section(self, parts: list[str], cp_index: int) -> list[str]:
         if cp_index == -1:
@@ -202,12 +202,12 @@ class Launchercito:
 
         formatted: list[str] = [
             "=== Parámetros ===\n",
-            f"{parts[cp_index - 1].replace('/', '\')}\n",
+            f"{parts[cp_index - 1].replace('/', '\\')}\n",
             "  -cp\n",
         ]
         unique_jars: set[str] = set()
         for jar in parts[cp_index + 1].split(";"):
-            clean_jar = jar.strip().replace("/", "\")
+            clean_jar = jar.strip().replace("/", "\\")
             if clean_jar and clean_jar not in unique_jars:
                 formatted.append(f"    {clean_jar}\n")
                 unique_jars.add(clean_jar)
@@ -240,7 +240,7 @@ class Launchercito:
         formatted = ["=== Opciones ===\n"]
         for i in range(options_start, len(parts), 2):
             if i + 1 < len(parts):
-                formatted.append(f"{parts[i]}\n\t{parts[i + 1].replace('/', '\')}\n")
+                formatted.append(f"{parts[i]}\n\t{parts[i + 1].replace('/', '\\')}\n")
 
         if command_options and "jvmArguments" in command_options:
             formatted.append("JVM Arguments:\n")
@@ -460,7 +460,7 @@ class Launchercito:
     def update_minecraft_directory(self, new_directory: str) -> None:
         if os.path.isdir(new_directory):
             self.minecraft_directory = new_directory
-            self.advanced_options_directory_var.set(new_directory.replace("/", "\"))
+            self.advanced_options_directory_var.set(new_directory.replace("/", "\\"))
             self.load_user_data_from_directory(new_directory)
             self.update_java_executable_path()
 
@@ -606,8 +606,9 @@ class Launchercito:
 
     def validate_long_username(self, username_input: str) -> bool:
         if len(username_input) > 15:
-            warning_message =
+            warning_message = (
                 "No podrás jugar en modo online con un nombre mayor a 15 caracteres."
+            )
             return self.confirm_warning(warning_message)
         return True
 
@@ -1667,6 +1668,13 @@ class Launchercito:
                     self.button_launch["state"] = "normal"
                 if self.button_close_game:
                     self.button_close_game["state"] = "disabled"
+
+    def update_java_executable_path(self) -> None:
+        selected_version = self.combobox_version.get() if self.combobox_version else ""
+        if not selected_version:
+            return
+        java_path = self.get_java_executable_path()
+        self.java_executable = java_path
 
 def _create_random_usernames_set() -> set[str]:
     max_length = 16
