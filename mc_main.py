@@ -90,7 +90,7 @@ class Launchercito:
         self.root.withdraw()
         self.root.after(0, self._initialize_launcher)
 
-    def _run_on_main_thread(self, func: Any, *args: Any, **kwargs: Any) -> None:
+    def _run_on_main_thread(self, func: Any, *args: Any, **kwargs) -> None:
         try:
             if self.root and self.root.winfo_exists():
                 self.root.after(0, lambda: func(*args, **kwargs))
@@ -115,13 +115,13 @@ class Launchercito:
         try:
             base_path = cast(str, sys._MEIPASS)  # type: ignore
         except Exception:
-            base_path = os.path.abspath(".")
+            base_path = os.path.abspath(os.path.dirname(__file__))
         return os.path.join(base_path, relative_path)
 
     def _configure_root_window(self) -> None:
         if self.root:
             self.root.resizable(False, False)
-            self.root.title("Minecito v1.5.4")
+            self.root.title("Minecito v1.5.5")
             self.root.geometry("305x160")
             self.root.iconbitmap(self.resource_path("icons/minecito_launcher.ico"))  # type: ignore
 
@@ -194,7 +194,7 @@ class Launchercito:
         return "".join(formatted)
 
     def format_java_section(self, parts: list[str], java_index: int) -> list[str]:
-        return ["=== Java ===\n", f"{parts[java_index].replace('/', '\\')}\n"]
+        return ["=== Java ===\n", f"{parts[java_index].replace('/', '\')}\n"]
 
     def format_cp_section(self, parts: list[str], cp_index: int) -> list[str]:
         if cp_index == -1:
@@ -202,12 +202,12 @@ class Launchercito:
 
         formatted: list[str] = [
             "=== Parámetros ===\n",
-            f"{parts[cp_index - 1].replace('/', '\\')}\n",
+            f"{parts[cp_index - 1].replace('/', '\')}\n",
             "  -cp\n",
         ]
         unique_jars: set[str] = set()
         for jar in parts[cp_index + 1].split(";"):
-            clean_jar = jar.strip().replace("/", "\\")
+            clean_jar = jar.strip().replace("/", "\")
             if clean_jar and clean_jar not in unique_jars:
                 formatted.append(f"    {clean_jar}\n")
                 unique_jars.add(clean_jar)
@@ -240,7 +240,7 @@ class Launchercito:
         formatted = ["=== Opciones ===\n"]
         for i in range(options_start, len(parts), 2):
             if i + 1 < len(parts):
-                formatted.append(f"{parts[i]}\n\t{parts[i + 1].replace('/', '\\')}\n")
+                formatted.append(f"{parts[i]}\n\t{parts[i + 1].replace('/', '\')}\n")
 
         if command_options and "jvmArguments" in command_options:
             formatted.append("JVM Arguments:\n")
@@ -460,7 +460,7 @@ class Launchercito:
     def update_minecraft_directory(self, new_directory: str) -> None:
         if os.path.isdir(new_directory):
             self.minecraft_directory = new_directory
-            self.advanced_options_directory_var.set(new_directory.replace("/", "\\"))
+            self.advanced_options_directory_var.set(new_directory.replace("/", "\"))
             self.load_user_data_from_directory(new_directory)
             self.update_java_executable_path()
 
@@ -606,9 +606,8 @@ class Launchercito:
 
     def validate_long_username(self, username_input: str) -> bool:
         if len(username_input) > 15:
-            warning_message = (
+            warning_message =
                 "No podrás jugar en modo online con un nombre mayor a 15 caracteres."
-            )
             return self.confirm_warning(warning_message)
         return True
 
@@ -1328,17 +1327,62 @@ class Launchercito:
             return self.java_executable
         selected_version = self.combobox_version.get() if self.combobox_version else ""
         if not selected_version:
-            return "javaw"
-        if self._is_alpha_or_beta(selected_version):
-            return self._get_minecraft_jre_path("jre-legacy")
-        return self._get_minecraft_jre_path("java-runtime-delta")
+            # Default to the latest runtime if no version is selected
+            return "javaw" # Fallback to system javaw if no explicit runtime
+        
+        runtime_name = self._get_runtime_name_for_version(selected_version)
+        java_path = self._get_minecraft_jre_path(runtime_name)
+        if os.path.isfile(java_path):
+            return java_path
+        
+        # Fallback to system javaw if the specific runtime path doesn't exist
+        return "javaw"
 
-    def _is_alpha_or_beta(self, version_id: str) -> bool:
-        return (
-            version_id.startswith(("a1.", "b1.", "infdev"))
-            or self.alpha_var.get()
-            or self.beta_var.get()
-        )
+    def _get_runtime_name_for_version(self, version_id: str) -> str:
+        # Handle old Alpha/Beta versions explicitly via checkboxes or specific version_id patterns
+        if self.alpha_var.get() or self.beta_var.get() or \
+           version_id.startswith(("a1.", "b1.", "infdev", "c0.")):
+            return "jre-legacy"
+
+        # Try to parse the version string
+        try:
+            parts = [int(p) for p in version_id.split('.') if p.isdigit()]
+            
+            # Special handling for snapshots like "21w19a" - usually indicates upcoming major version
+            if "w" in version_id and len(parts) < 2: # e.g., "21w19a" -> implies 1.17 development
+                if int(version_id.split('w')[0]) >= 21: # Snapshots from 21wXXa onwards are 1.17+
+                    return "java-runtime-alpha" # 1.17.x uses Java 16
+                else: # Older snapshots might be 1.16.x or lower
+                    return "jre-legacy"
+
+            if not parts: # Unable to parse major.minor.patch
+                return "java-runtime-delta" # Default to latest for unparseable or generic "release"
+
+            major = parts[0]
+            minor = parts[1] if len(parts) > 1 else 0
+
+            # Logic based on readAI.txt
+            if major == 1:
+                if minor <= 16: # Until 1.16.5 inclusive -> Java 8
+                    return "jre-legacy"
+                elif minor == 17: # 1.17.x -> Java 16
+                    return "java-runtime-alpha"
+                elif minor >= 18 and minor <= 20: # 1.18.x, 1.19.x, 1.20.x up to 1.20.4 -> Java 17
+                    # readAI.txt says 1.20.5+ is delta, so 1.20.0-1.20.4 is beta/gamma
+                    # If version_id has a patch, check it explicitly for 1.20.5 boundary
+                    if minor == 20 and len(parts) > 2 and parts[2] >= 5:
+                        return "java-runtime-delta"
+                    return "java-runtime-beta" # Using beta as a default for 1.18-1.20.4
+                elif minor >= 21: # 1.21.x and newer -> Java 21
+                    return "java-runtime-delta"
+            
+            # For future major versions or other edge cases, default to delta
+            return "java-runtime-delta"
+
+        except Exception as e:
+            self.log_message(f"Error parsing version '{version_id}': {e}. Defaulting to java-runtime-delta.")
+            return "java-runtime-delta"
+
 
     def _get_minecraft_jre_path(self, runtime_name: str) -> str:
         runtime_path = os.path.join(
@@ -1623,13 +1667,6 @@ class Launchercito:
                     self.button_launch["state"] = "normal"
                 if self.button_close_game:
                     self.button_close_game["state"] = "disabled"
-
-    def update_java_executable_path(self) -> None:
-        selected_version = self.combobox_version.get() if self.combobox_version else ""
-        if not selected_version:
-            return
-        java_path = self.get_java_executable_path()
-        self.java_executable = java_path
 
 def _create_random_usernames_set() -> set[str]:
     max_length = 16
