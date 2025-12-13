@@ -81,7 +81,7 @@ Minecito es un proyecto vivo que busca la perfección. Si tienes una idea, una m
 
 *   **[Python](https://www.python.org/)** - El motor de toda la operación.
 *   **[Tkinter](https://docs.python.org/3/library/tkinter.html)** - Para una interfaz gráfica de usuario ligera y nativa.
-*   **[minecraft-launcher-lib](https://github.com/minecraft-launcher-lib/minecraft-launcher-lib)** - La biblioteca que hace posible la magia de lanzar Minecraft.
+*   **[minecraft-launcher-lib](https://github.com/minecraft-launcher-lib/minecraft-launcher-lib)** by [JakobDev](https://github.com/JakobDev) - La biblioteca que hace posible la magia de lanzar Minecraft.
 
 ---
 
