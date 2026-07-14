@@ -1,0 +1,3 @@
+[submodule "minecraft_launcher_lib"]
+	path = minecraft_launcher_lib
+	url = https://github.com/Linxurs/minecraft_launcher_lib_rs.git
