@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opciones Avanzadas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="settings-window">
+        <label style="position: absolute; left: 5px; top: 2px; color: darkred;">Argumentos JVM:</label>
+        <input type="text" id="jvm-args" style="position: absolute; left: 5px; top: 22px; width: 320px;">
+
+        <label style="position: absolute; left: 5px; top: 44px; color: darkred;">Ejecutable de Java:</label>
+        <input type="text" id="java-path" style="position: absolute; left: 5px; top: 64px; width: 240px;" readonly>
+        <button id="btn-select-java" style="position: absolute; left: 260px; top: 62px; width: 65px;">Seleccionar</button>
+
+        <label style="position: absolute; left: 5px; top: 86px; color: darkred;">Directorio de Minecraft:</label>
+        <input type="text" id="game-dir" style="position: absolute; left: 5px; top: 106px; width: 240px;" readonly>
+        <button id="btn-select-dir" style="position: absolute; left: 260px; top: 104px; width: 65px;">Seleccionar</button>
+
+        <label style="position: absolute; left: 5px; top: 130px;"><input type="checkbox" id="chk-close-launcher"> Cerrar Minecito cuando inicie Minecraft.</label>
+        <label style="position: absolute; left: 5px; top: 150px;"><input type="checkbox" id="chk-hide-log"> Habilitar el registro.</label>
+        <label style="position: absolute; left: 5px; top: 170px;"><input type="checkbox" id="chk-enable-uuid"> Habilitar UUID.</label>
+        <label style="position: absolute; left: 5px; top: 190px;"><input type="checkbox" id="chk-delete-user"> Eliminar usuario actual.</label>
+
+        <button id="btn-save-settings" style="position: absolute; left: 85px; top: 210px; width: 60px;">Aplicar</button>
+        <button id="btn-close-modal" style="position: absolute; left: 185px; top: 210px; width: 60px;">Cancelar</button>
+    </div>
+
+    <script src="advanced.js"></script>
+</body>
+</html>
